@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How SMS Opt-In Works in CedarPost</title>
+<meta name="description" content="CedarPost's in-app SMS consent flow, step by step. A Stetline LLC product.">
+<style>
+  :root {
+    --forest-950: #0C201A;
+    --forest-700: #1E4D3B;
+    --bark-600: #6B5642;
+    --cream-100: #F6F1E7;
+    /* App-side (light) palette for the screen mockups */
+    --app-bg: #F6F1E7;
+    --app-surface: #FFFFFF;
+    --app-border: #DDD4C3;
+    --app-heading: #14332A;
+    --app-text: #2B3A33;
+    --app-muted: #6E7A72;
+    --app-primary: #1E4D3B;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--forest-950);
+    color: var(--cream-100);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.7;
+    padding: 3rem 1.5rem 4rem;
+  }
+  main { max-width: 42rem; margin: 0 auto; }
+  .wordmark {
+    display: block;
+    color: var(--cream-100);
+    text-decoration: none;
+    font-weight: 600;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    font-size: 0.9375rem;
+    margin-bottom: 2.5rem;
+  }
+  h1 { font-size: 1.75rem; font-weight: 600; margin-bottom: 0.25rem; }
+  .effective { color: rgba(246, 241, 231, 0.55); font-size: 0.875rem; margin-bottom: 2rem; }
+  p, li { color: rgba(246, 241, 231, 0.85); margin-bottom: 0.75rem; }
+  strong { color: var(--cream-100); }
+  a { color: var(--cream-100); border-bottom: 1px solid rgba(107, 86, 66, 0.8); text-decoration: none; }
+  footer { max-width: 42rem; margin: 3rem auto 0; font-size: 0.8125rem; color: rgba(246, 241, 231, 0.5); }
+
+  .step { margin: 2.5rem 0; }
+  .step-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(107, 86, 66, 0.5);
+  }
+  .step-num {
+    flex: none;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 1px solid var(--bark-600);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 1.65rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+  .step-head h2 { font-size: 1.125rem; font-weight: 600; }
+
+  /* Framed phone-screen mockups of the actual app UI (cedar theme). */
+  .screen {
+    background: var(--app-bg);
+    border: 1px solid var(--bark-600);
+    border-radius: 18px;
+    padding: 1.25rem;
+    max-width: 22rem;
+    margin: 1rem auto;
+    color: var(--app-text);
+    line-height: 1.5;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  }
+  .screen .app-title {
+    color: var(--app-heading);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+  .screen .section-label {
+    color: var(--app-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0.75rem 0 0.25rem;
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: 10px;
+    padding: 0.65rem 0.85rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9375rem;
+  }
+  .toggle {
+    flex: none;
+    width: 44px;
+    height: 26px;
+    border-radius: 13px;
+    background: #C9C2B4;
+    position: relative;
+  }
+  .toggle::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+  }
+  .toggle.on { background: var(--app-primary); }
+  .toggle.on::after { left: auto; right: 2px; }
+  .consent-copy {
+    color: var(--app-muted);
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    padding: 0.15rem 0.25rem 0;
+  }
+  .screen .field {
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: 10px;
+    padding: 0.65rem 0.85rem;
+    margin-bottom: 0.5rem;
+    color: var(--app-muted);
+    font-size: 0.9375rem;
+    letter-spacing: 0.15em;
+  }
+  .screen .button {
+    background: var(--app-primary);
+    color: #F6F1E7;
+    border-radius: 10px;
+    text-align: center;
+    padding: 0.7rem;
+    font-weight: 600;
+    font-size: 0.9375rem;
+  }
+  .screen .hint { color: var(--app-muted); font-size: 0.8125rem; margin-bottom: 0.75rem; }
+  .caption {
+    text-align: center;
+    color: rgba(246, 241, 231, 0.55);
+    font-size: 0.8125rem;
+    max-width: 22rem;
+    margin: 0 auto;
+  }
+</style>
+</head>
+<body>
+<main>
+  <a class="wordmark" href="/">CedarPost</a>
+  <h1>How SMS Opt-In Works in CedarPost</h1>
+  <p class="effective">A Stetline LLC product &middot; illustrations of the CedarPost mobile app's consent flow</p>
+
+  <p>CedarPost is members-only church software: text messaging reaches a person
+  only after they've joined their own church in the app <strong>and</strong>
+  turned text messages on themselves. The full flow, in order:</p>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">1</span><h2>Install and join — with the church's approval</h2></div>
+    <p>A new member installs CedarPost, creates an account, and enters their
+    church's private invite code. That only files a request: a church
+    administrator must approve them before they're a member at all. Nobody is
+    in the system — let alone receiving messages — without both the invite code
+    and staff approval.</p>
+    <div class="screen">
+      <div class="app-title">Join your church</div>
+      <div class="hint">Enter your church's invite code — you'll find it in the bulletin, or ask your church office.</div>
+      <div class="field">VALLEY2026</div>
+      <div class="button">Send request</div>
+    </div>
+    <p class="caption">The join screen. The request then waits for a church administrator's approval.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">2</span><h2>Text messages are OFF by default</h2></div>
+    <p>Every member controls their own notification channels from Notification
+    Settings on their profile. The text-message toggle starts <strong>off</strong> —
+    no member receives SMS unless they enable it themselves. There is no
+    pre-checked box and no admin can turn it on for them.</p>
+    <div class="screen">
+      <div class="app-title">Notifications</div>
+      <div class="section-label">Announcements</div>
+      <div class="row"><span>Push</span><span class="toggle on"></span></div>
+      <div class="row"><span>Email</span><span class="toggle on"></span></div>
+      <div class="row"><span>Text messages</span><span class="toggle"></span></div>
+    </div>
+    <p class="caption">The default state: text messages off.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">3</span><h2>The member opts in — with the terms in front of them</h2></div>
+    <p>Enabling the toggle is the consent action, and the terms sit directly
+    beneath it at the moment of choice:</p>
+    <div class="screen">
+      <div class="app-title">Notifications</div>
+      <div class="section-label">Announcements</div>
+      <div class="row"><span>Push</span><span class="toggle on"></span></div>
+      <div class="row"><span>Email</span><span class="toggle on"></span></div>
+      <div class="row"><span>Text messages</span><span class="toggle on"></span></div>
+      <div class="consent-copy">By enabling, you agree to receive church
+      announcement texts. Msg frequency varies. Msg &amp; data rates may apply.
+      Reply STOP anytime to opt out.</div>
+    </div>
+    <p class="caption">Opt-in enabled, with the consent language visible under the toggle.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">4</span><h2>Opting out is always one step away</h2></div>
+    <p>The member can turn text messages back off at any time on the same
+    screen, or reply <strong>STOP</strong> to any message — either one ends SMS
+    immediately. Replying <strong>HELP</strong> provides assistance. Mobile
+    numbers and opt-in status are never shared with or sold to third parties
+    for marketing — see our <a href="/privacy.html">Privacy Policy</a>.</p>
+  </div>
+</main>
+<footer>
+  A Stetline LLC product &middot; <a href="/">Home</a> &middot; <a href="/privacy.html">Privacy Policy</a> &middot; <a href="/terms.html">Terms of Service</a>
+</footer>
+</body>
+</html>
